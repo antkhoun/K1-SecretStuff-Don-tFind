@@ -11,7 +11,6 @@
 // I just made changes to the FinalProject.c, not to any other files. 
 // I mainly put most of the code we had and put into function to make it cleaner. 
 // I also add quite a bit more stuff to it such as manual movement and states. 
-// WARNING: I have not tried this with the robot or anything so there's a great chance that this could be broken!!!
 
 #include <avr/io.h>
 #include <stdio.h>
@@ -149,13 +148,15 @@ void keyboardInput(char c)
 	// move the iRobot forward, 10 cm
 	if(c == 'w')
 	{
+		serial_puts("MOVING FORWARD");
 		moveFowardUpdate(sensor_data, 10);
-		wait_ms(50);
+		wait_ms(100);
 	}
 	
 	// move the iRobot backwards, 10 cm
 	else if(c == 's')
 	{
+		serial_puts("MOVING BACKWARD");
 		moveBackward(sensor_data, 10);
 		wait_ms(100);
 	}
@@ -163,13 +164,17 @@ void keyboardInput(char c)
 	// rotate the iRobot counter clockwise, 15 degrees
 	else if(c == 'a')
 	{
-		turnClockwise(sensor_data, -15);
+		serial_puts("TURNING COUNTER CLOCKWISE");
+		turnClockwise(sensor_data, -15); // TODO
+		wait_ms(100);
 	}
 
 	// rotate the iRobot clockwise, 15 degrees
 	else if(c == 'd')
 	{
-		turnClockwise(sensor_data, 15);
+		serial_puts("TURNING CLOCKWISE");
+		turnClockwise(sensor_data, 15); // TODO
+		wait_ms(100);
 	}
 
 	// start sweeping for ir and sonar data
@@ -180,13 +185,10 @@ void keyboardInput(char c)
 		char prt[3];
 		sprintf(prt, "%d", smallest);
 		serial_puts(prt);
+		wait_ms(100);
 	}
 	
-	// emergency stop
-	else if(c == '*')
-	{
-		oi_set_wheels(0, 0);
-	}
+	// if any other key is pressed, nothing happens
 
 }
 
@@ -310,6 +312,117 @@ int errorDetection()
 	
 	/// light errors, soon to be made ///
 	
+	// left sensor to detect white tape
+	if(sensor_data->cliff_left_signal < WHITE_MAX && sensor_data->cliff_left_signal > WHITE_MIN){
+		// update state
+		updateState(WHITE_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  WHITE TAPE DETECTED! LEFT\n\r");
+		// set detection to 1
+		detection = 1;
+	}
+	
+	// left sensor to detect black tape
+	if(sensor_data->cliff_left_signal < BLACK_MAX && sensor_data->cliff_left_signal > BLACK_MIN){
+		// update state
+		updateState(BLACK_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  BLACK TAPE DETECTED! LEFT\n\r");
+		// set detection to 1
+		detection = 1;
+		
+		// TODO
+		// scan for pillars, if clear, move forward 5cm and stop
+		// blink the power led light 3 times and do a victory tone
+	}
+	
+	// front left sensor to detect white tape
+	if(sensor_data->cliff_frontleft_signal < WHITE_MAX && sensor_data->cliff_frontleft_signal > WHITE_MIN){
+		// update state
+		updateState(WHITE_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  WHITE TAPE DETECTED! FRONT LEFT\n\r");
+		// set detection to 1
+		detection = 1;
+	}
+	
+	// front left sensor to detect black tape
+	if(sensor_data->cliff_frontleft_signal < BLACK_MAX && sensor_data->cliff_frontleft_signal > BLACK_MIN){
+		// update state
+		updateState(BLACK_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  BLACK TAPE DETECTED! FRONT LEFT\n\r");
+		// set detection to 1
+		detection = 1;
+		
+		// TODO
+		// scan for pillars, if clear, move forward 5cm and stop
+		// blink the power led light 3 times and do a victory tone
+	}
+	
+	// front right sensor to detect white tape
+	if(sensor_data->cliff_frontright_signal < WHITE_MAX && sensor_data->cliff_frontright_signal > WHITE_MIN){
+		// update state
+		updateState(WHITE_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  WHITE TAPE DETECTED! FRONT RIGHT\n\r");
+		// set detection to 1
+		detection = 1;
+	}
+	
+	// front right sensor to detect black tape
+	if(sensor_data->cliff_frontright_signal < BLACK_MAX && sensor_data->cliff_frontright_signal > BLACK_MIN){
+		// update state
+		updateState(BLACK_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  BLACK TAPE DETECTED! FRONT RIGHT\n\r");
+		// set detection to 1
+		detection = 1;
+		
+		// TODO
+		// scan for pillars, if clear, move forward 5cm and stop
+		// blink the power led light 3 times and do a victory tone
+	}
+	
+	// right sensor to detect white tape
+	if(sensor_data->cliff_right_signal < WHITE_MAX && sensor_data->cliff_right_signal > WHITE_MIN){
+		// update state
+		updateState(WHITE_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  WHITE TAPE DETECTED! RIGHT\n\r");
+		// set detection to 1
+		detection = 1;
+	}
+	
+	// right sensor to detect black tape
+	if(sensor_data->cliff_right_signal < BLACK_MAX && sensor_data->cliff_right_signal > BLACK_MIN){
+		// update state
+		updateState(BLACK_TAPE);
+		// stop the iRobot
+		oi_set_wheels(0, 0);
+		// print out error to putty
+		serial_puts("  BLACK TAPE DETECTED! RIGHT\n\r");
+		// set detection to 1
+		detection = 1;
+		
+		// TODO
+		// scan for pillars, if clear, move forward 5cm and stop
+		// blink the power led light 3 times and do a victory tone
+	}
 	
 	// add a new line at the end
 	//serial_puts("\n\r");
@@ -332,23 +445,8 @@ void moveFowardUpdate(oi_t* sensor, int centimeters){
 	oi_set_wheels(150, 150); // move forward;
 	
 	while (sum < millimeters) {
-		if(errorDetection() == 1)
-		{
-			break;
-		}
-		sum += sensor->distance;
-	}
-	
-	oi_set_wheels(0, 0); // stop
-	oi_free(sensor);
-}
-
-void moveBackwardUpdate(oi_t* sensor, int centimeters){
-	int millimeters = centimeters * -10;
-	int sum = 0;
-	oi_set_wheels(-200, -200); // move backwards
-	
-	while (sum > millimeters) {
+		// check if there's an error detectiion while moving
+		// if so, break out the loop and stop
 		if(errorDetection() == 1)
 		{
 			break;
