@@ -5,13 +5,6 @@
  *  Author: sethl (Team?)
  */ 
 
-
-// README.txt - Anthony Khounlo
-// This is my updated version of the code we worked on the other day. 
-// I just made changes to the FinalProject.c, not to any other files. 
-// I mainly put most of the code we had and put into function to make it cleaner. 
-// I also add quite a bit more stuff to it such as manual movement and states. 
-
 #include <avr/io.h>
 #include <stdio.h>
 
@@ -58,6 +51,8 @@ char dataString[250];
 oi_t *sensor_data;
 // array of the sensors
 int sensorArray[10];
+// to indicate whether the iRobot is in precision mode
+int precision = 0;
 
 /**
  *
@@ -153,46 +148,68 @@ void printData()
  */
 void keyboardInput(char c)
 {
-	// move the iRobot forward, 10 cm
-	if(c == 'w')
+	// toggle precision mode, if activated, move is 5 cm and 5 degrees
+	if(c == 't')
 	{
-		serial_puts("MOVING FORWARD");
-		moveFowardUpdate(sensor_data, 10);
+		if(precision == 0){
+			serial_puts("PRECISION ACTIVATED\n\r");
+			precision = 1;
+		}
+		else{
+			serial_puts("PRECISION DEACTIVATED\n\r");
+			precision = 0;
+		}
+	}
+	
+	// move the iRobot forward, 10 cm
+	else if(c == 'w')
+	{
+		serial_puts("MOVING FORWARD\n\r");
+		if(precision)
+			moveFowardUpdate(sensor_data, 5);
+		else
+			moveFowardUpdate(sensor_data, 10);
 		wait_ms(100);
 	}
 	
 	// move the iRobot backwards, 10 cm
 	else if(c == 's')
 	{
-		serial_puts("MOVING BACKWARD");
-		moveBackward(sensor_data, 10);
+		serial_puts("MOVING BACKWARD\n\r");
+		if(precision)
+			moveBackward(sensor_data, 5);
+		else
+			moveBackward(sensor_data, 10);
 		wait_ms(100);
 	}
 
 	// rotate the iRobot counter clockwise, 15 degrees
 	else if(c == 'a')
 	{
-		serial_puts("TURNING COUNTER CLOCKWISE");
-		turnClockwise(sensor_data, -15); // TODO
+		serial_puts("TURNING COUNTER CLOCKWISE\n\r");
+		if(precision)
+			turnClockwise(sensor_data, -5); // TODO
+		else
+			turnClockwise(sensor_data, -15); // TODO
 		wait_ms(100);
 	}
 
 	// rotate the iRobot clockwise, 15 degrees
 	else if(c == 'd')
 	{
-		serial_puts("TURNING CLOCKWISE");
-		turnClockwise(sensor_data, 15); // TODO
+		serial_puts("TURNING CLOCKWISE\n\r");
+		if(precision)
+			turnClockwise(sensor_data, 5); // TODO
+		else
+			turnClockwise(sensor_data, 15); // TODO
 		wait_ms(100);
 	}
 
 	// start sweeping for ir and sonar data
 	else if(c == ' ')
 	{
-		//place holder for the sweeping
-		int smallest = smallestObjectSweep();
-		char prt[3];
-		sprintf(prt, "%d", smallest);
-		serial_puts(prt);
+		serial_puts("SWEEPING FOR OBJECTS\n\r");
+		smallestObjectSweep();
 		wait_ms(100);
 	}
 	
