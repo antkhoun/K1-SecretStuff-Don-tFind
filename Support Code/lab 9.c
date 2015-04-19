@@ -14,11 +14,12 @@
 #include "util.h"
 #include "lcd.h"
 #include "stdio.h"
+#include "math.h"
 #define PINGTHRESHOLD 20
 #define IRTHRESHOLD 100
 
 //int main(void)
-int smallestObjectSweep()
+void smallestObjectSweep()
 {
 	// initialize lcd (clears screen)
 	//lcd_init();
@@ -33,18 +34,21 @@ int smallestObjectSweep()
 	
 	int degrees = 0;
 	int irDist = 0;
-	int sonarDist = 0;
+	//int sonarDist = 0;
 	int seesObject = 0;
 	int objectStartDegreePosition = 0;
 	int objectEndDegreePosition = 0;
 	int totalDegrees = 0;
 	int degreeArray[15];
-	int lowestDegree;
+	//int lowestDegree;
 	int objectsFound = 0;
 	int middleDegreeArray[15];
 	int degreeIncrementer = 0;
-	char dataLine[250];
-	char labelHeaders[]  = "Degrees       IR Distance (cm)       Sonar Distance (cm)"; //7 spaces between each
+	//char dataLine[250];
+	//char labelHeaders[]  = "Degrees       IR Distance (cm)       Sonar Distance (cm)"; //7 spaces between each
+	
+	int distancesPing[15];
+	int currentDistance = 0;
 	
 	// print labels and get ready for data
 	//serial_puts(labelHeaders);
@@ -60,7 +64,7 @@ int smallestObjectSweep()
 		// get the distance from the IR Sensor
 		irDist = adcConvert(ADC_read()); 
 		// get distance from the sonar
-		sonarDist = ping_read(); 
+		//sonarDist = ping_read(); 
 		//convert ints to string
 		//sprintf(dataLine,"%d              %d                       %d",degrees,irDist,sonarDist);
 		// print the data string and new line
@@ -73,6 +77,8 @@ int smallestObjectSweep()
 			seesObject = 1;
 			//grab starting degree position
 			objectStartDegreePosition = degrees;
+			//start the averaging of the distance
+			currentDistance = (int) ping_read();
 		}
 		else if ((irDist > 100 || irDist < 10) && seesObject == 1){
 			//object flag set false
@@ -89,6 +95,8 @@ int smallestObjectSweep()
 			else {
 				degreeArray[degreeIncrementer] = totalDegrees;
 				middleDegreeArray[degreeIncrementer] = (objectStartDegreePosition + objectEndDegreePosition) / 2;
+				// calculate the average distance for the current object
+				distancesPing[degreeIncrementer] = currentDistance / ((totalDegrees/2) + 1);
 				degreeIncrementer++;
 				if (degreeIncrementer > 15) {
 					lprintf("ERROR");
@@ -100,25 +108,38 @@ int smallestObjectSweep()
 				totalDegrees = 0;
 			}
 		}
+		else{
+			currentDistance += (int) ping_read();
+		}
 		wait_ms(80); 
 	}
 	
-	lowestDegree = degreeArray[0];
-	for(int i = 0; i < degreeIncrementer; i++) {
-		if(degreeArray[i] < lowestDegree)
-			lowestDegree = degreeArray[i];
+// 	lowestDegree = degreeArray[0];
+// 	for(int i = 0; i < degreeIncrementer; i++) {
+// 		if(degreeArray[i] < lowestDegree)
+// 			lowestDegree = degreeArray[i];
+// 	}
+// 	int j = 0;
+// 	int finalPosition = 0;
+// 	//lprintf("%d degreeIncrementer", degreeIncrementer);
+// 	while(j < degreeIncrementer) {
+// 		if(degreeArray[j] == lowestDegree) {
+// 			finalPosition = middleDegreeArray[j];
+// 			break;
+// 		}
+// 		j++;
+// 	}
+
+	// print the angle, distance, and width of the objects
+	for(int i = 0; i < degreeIncrementer; i++){
+		char prt[30];
+		int width = 2*distancesPing[i]*tan(.5*degreeArray[i]*M_PI/180);
+		sprintf(prt, "Angle: %03d   Distance: %03d   Width: %02d\n\r", 
+			middleDegreeArray[i], distancesPing[i], width);
+		serial_puts(prt);
 	}
-	int j = 0;
-	int finalPosition = 0;
-	//lprintf("%d degreeIncrementer", degreeIncrementer);
-	while(j < degreeIncrementer) {
-		if(degreeArray[j] == lowestDegree) {
-			finalPosition = middleDegreeArray[j];
-			break;
-		}
-		j++;
-	}
-return finalPosition;
+	
+	//return finalPosition;
 //	move_servo(finalPosition);
 //	lprintf("Final Position: %d\nFinal OBJ: %d", finalPosition, ++j);
 }
