@@ -51,6 +51,19 @@ oi_t *sensor_data;
 // the state of the iRobot
 state iState = FREE_MOVEMENT;
 
+// variables that keep track of the location of the array for the sensors
+int leftBumper = 0;
+int rightBumper = 1;
+int cliffLeft = 2;
+int cliffFrontLeft = 3;
+int cliffFrontRight = 4;
+int cliffRight = 5;
+int cliffLeftSignal = 6;
+int cliffLeftFrontSignal = 7;
+int cliffRightFrontSignal = 8;
+int cliffRightSignal = 9;
+// array of the sensors
+int sensorArray[10];
 /**
  *
  * blah blah blah
@@ -238,9 +251,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  LEFT BUMBER HIT!\n\r");
+		//serial_puts("  LEFT BUMBER HIT!\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[leftBumper] = 1;
 	}
 	
 	// right bumper
@@ -251,9 +265,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  RIGHT BUMBER HIT!\n\r");
+		// serial_puts("  RIGHT BUMBER HIT!\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[rightBumper] = 1;
 	}
 	
 	/// cliff errors ///
@@ -266,9 +281,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  LEFT CLIFF DETECTED!\n\r");
+		// serial_puts("  LEFT CLIFF DETECTED!\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffLeft] = 1;
 	}
 	
 	// front left cliff
@@ -279,9 +295,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  FRONT LEFT CLIFF DETECTED!\n\r");
+		// serial_puts("  FRONT LEFT CLIFF DETECTED!\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffFrontLeft] = 1;
 	}
 	
 	// front right cliff
@@ -292,9 +309,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  FRONT RIGHT CLIFF DETECTED!\n\r");
+		// serial_puts("  FRONT RIGHT CLIFF DETECTED!\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffFrontRight] = 1;
 	}
 	
 	// right cliff
@@ -305,9 +323,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  RIGHT CLIFF DETECTED!\n\r");
+		// serial_puts("  RIGHT CLIFF DETECTED!\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffRight] = 1;
 	}
 	
 	/// light errors, soon to be made ///
@@ -319,9 +338,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  WHITE TAPE DETECTED! LEFT\n\r");
+		// serial_puts("  WHITE TAPE DETECTED! LEFT\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffLeftSignal] = 1;
 	}
 	
 	// left sensor to detect black tape
@@ -331,9 +351,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  BLACK TAPE DETECTED! LEFT\n\r");
+		// serial_puts("  BLACK TAPE DETECTED! LEFT\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffLeftSignal] = 2;
 		
 		// TODO
 		// scan for pillars, if clear, move forward 5cm and stop
@@ -347,9 +368,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  WHITE TAPE DETECTED! FRONT LEFT\n\r");
+		// serial_puts("  WHITE TAPE DETECTED! FRONT LEFT\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffLeftFrontSignal] = 1;
 	}
 	
 	// front left sensor to detect black tape
@@ -359,9 +381,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  BLACK TAPE DETECTED! FRONT LEFT\n\r");
+		// serial_puts("  BLACK TAPE DETECTED! FRONT LEFT\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffLeftFrontSignal] = 2;
 		
 		// TODO
 		// scan for pillars, if clear, move forward 5cm and stop
@@ -375,9 +398,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  WHITE TAPE DETECTED! FRONT RIGHT\n\r");
+		// serial_puts("  WHITE TAPE DETECTED! FRONT RIGHT\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffRightFrontSignal] = 1;
 	}
 	
 	// front right sensor to detect black tape
@@ -387,9 +411,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  BLACK TAPE DETECTED! FRONT RIGHT\n\r");
+		// serial_puts("  BLACK TAPE DETECTED! FRONT RIGHT\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffRightFrontSignal] = 2;
 		
 		// TODO
 		// scan for pillars, if clear, move forward 5cm and stop
@@ -403,9 +428,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  WHITE TAPE DETECTED! RIGHT\n\r");
+		// serial_puts("  WHITE TAPE DETECTED! RIGHT\n\r");
 		// set detection to 1
 		detection = 1;
+		sensorArray[cliffRightSignal] = 1;
 	}
 	
 	// right sensor to detect black tape
@@ -415,10 +441,10 @@ int errorDetection()
 		// stop the iRobot
 		oi_set_wheels(0, 0);
 		// print out error to putty
-		serial_puts("  BLACK TAPE DETECTED! RIGHT\n\r");
+		// serial_puts("  BLACK TAPE DETECTED! RIGHT\n\r");
 		// set detection to 1
 		detection = 1;
-		
+		sensorArray[cliffRightSignal] = 2;
 		// TODO
 		// scan for pillars, if clear, move forward 5cm and stop
 		// blink the power led light 3 times and do a victory tone
@@ -426,9 +452,9 @@ int errorDetection()
 	
 	// add a new line at the end
 	//serial_puts("\n\r");
-	
 	if(detection != 0)
 		serial_puts("\n\r");
+	printSensorStatus(sensorArray);
 	return detection;
 }
 
@@ -456,6 +482,121 @@ void moveFowardUpdate(oi_t* sensor, int centimeters){
 	
 	oi_set_wheels(0, 0); // stop
 	oi_free(sensor);
+}
+
+/**
+*
+* Function to loop through the sensor array and decide what to print
+* Prints the total number of sensors activated as well as which specific sensors are activated
+*/
+void printSensorStatus(int arr[])
+{
+	// print the total number of sensors activated
+	int numberSensors = 0;
+	for(int i = 0; i < 10; i++) {
+		if(sensorArray[i] != 0) {
+			numberSensors++;
+		}
+	}
+	serial_putc('\n');
+	serial_putc('\r');
+	sprintf(totalString, "NUMBER OF SENSORS ACTIVATED: %d", numberSensors);
+	serial_puts(totalString);
+	serial_putc('\n');
+	serial_putc('\r');
+	//print individually each of the total issues
+	if(sensorArray[leftBumper] == 1)
+	{
+		serial_puts("LEFT BUMPER HAS BEEN HIT");
+		serial_putc('\n');
+		serial_putc('\r');
+	}
+	if(sensorArray[rightBumper] == 1)
+	{
+		serial_puts("RIGHT BUMPER HAS BEEN HIT");
+		serial_putc('\n');
+		serial_putc('\r');
+	}
+	if(sensorArray[cliffLeft] == 1)
+	{
+		serial_puts("OVER LEFT CLIFF");
+		serial_putc('\n');
+		serial_putc('\r');
+	}
+	if(sensorArray[cliffFrontLeft] == 1)
+	{
+		serial_puts("OVER FRONT LEFT CLIFF");
+		serial_putc('\n');
+		serial_putc('\r');
+	}
+	if(sensorArray[cliffFrontRight] == 1)
+	{
+		serial_puts("OVER FRONT RIGHT CLIFF");
+		serial_putc('\n');
+		serial_putc('\r');
+	}
+	if(sensorArray[cliffRight] == 1)
+	{
+		serial_puts("OVER RIGHT CLIFF");
+		serial_putc('\n');
+		serial_putc('\r');
+	}
+	if(sensorArray[cliffLeftSignal] != 0)
+	{
+		if (sensorArray[cliffLeftSignal] == 1) {
+			serial_puts("LEFT OVER WHITE TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+		else {
+			serial_puts("LEFT OVER BLACK TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+	}
+	if(sensorArray[cliffLeftFrontSignal] != 0)
+	{
+		if (sensorArray[cliffLeftFrontSignal] == 1) {
+			serial_puts("LEFT FRONT OVER WHITE TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+		else {
+			serial_puts("LEFT FRONT OVER BLACK TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+	}
+	if(sensorArray[cliffRightFrontSignal] != 0)
+	{
+		if (sensorArray[cliffRightFrontSignal] == 1)
+		{
+			serial_puts("RIGHT FRONT OVER WHITE TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+		else
+		{
+			serial_puts("RIGHT FRONT OVER BLACK TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+	}
+	if(sensorArray[cliffRightSignal] != 0)
+	{
+		if (sensorArray[cliffRightSignal] == 1)
+		{
+			serial_puts("RIGHT OVER WHITE TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+		else
+		{
+			serial_puts("RIGHT OVER BLACK TAPE");
+			serial_putc('\n');
+			serial_putc('\r');
+		}
+	}
 }
 
 /**
