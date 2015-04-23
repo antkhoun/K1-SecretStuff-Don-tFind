@@ -2,14 +2,19 @@
  * FinalProject.c
  *
  * Created: 4/12/2015 1:31:01 PM
- *  Author: sethl (Team?)
- */ 
+ *  Author: Seth Lightfoot, Anthony Khounlo, Caleb Redman, David Lowry,  (Team?)
+ * Project to maneuver a treachorous Mars course where we dodge cliffs, pillars, and boulders
+ */
 
 //
 
 #include <avr/io.h>
 #include <stdio.h>
-
+/**
+*
+* Files that we needed to include. These are files from our original projects moved
+* into a nicer folder to work in a more compact way.
+*/
 #include "Support Code/USART.h"
 #include "Support Code/IR.h"
 #include "Support Code/PING.h"
@@ -20,7 +25,10 @@
 #include "Support Code/lcd.h"
 #include "Support Code/open_interface.h"
 #include "Support Code/music.h"
- 
+/**
+* Values that we know are the minimun value for signal for white tape as well as maximum for black tape.
+* Black tape is the goal finishing. Anything in between these values is the normal floor.
+*/
 #define WHITE_MIN 600
 #define BLACK_MAX 190
 
@@ -36,6 +44,7 @@
 #define CLIFF_FRONT_RIGHT_SIGNAL 8
 #define CLIFF_RIGHT_SIGNAL 9
 
+// function prototypes
 void initialize(); // initialize the timers, etc.
 void clearScreen(); // pseudo clear screen for putty
 void printHeader(); // print the header
@@ -59,9 +68,8 @@ int sensorArray[10];
 int precision = 0;
 
 /**
- *
- * blah blah blah
- *
+ * This is where we operate for the entirety of the project.  Within here we are 
+ * operating our robot through the course using putty key commands
  */
 int main(void)
 {
@@ -89,6 +97,8 @@ int main(void)
 /**
  *
  * Function to initialize the timers, registers, etc. for the ir, ping, servo, lcd
+ * allows us to not have to initialize everything in the beginning, just call one initialize
+ * function.
  */
 void initialize()
 {
@@ -110,7 +120,8 @@ void initialize()
 
 /**
  *
- * Function to clear the screen on putty
+ * Function to clear the screen on putty. This is just a psuedo clear, so it adds a bunch of 
+ * blank lines so everything is the screen, just pushed up.
  */
 void clearScreen()
 {
@@ -123,7 +134,8 @@ void clearScreen()
 
 /**
  *
- * Function to print heading for bumpers, cliff, and light detection
+ * Function to print heading for bumpers, cliff, and light detection.
+ * Use this to let us know immediately the status of all the sensors.
  */
 void printHeader()
 {
@@ -133,7 +145,9 @@ void printHeader()
 
 /**
  *
- * Function to print bumper, cliff, and light sensor data to putty 
+ * Function to print bumper, cliff, and light sensor data to putty.
+ * Call this function directly after printHeader() so all the signals are directly
+ * under their labels
  */
 void printData()
 {
@@ -153,6 +167,7 @@ void printData()
 void keyboardInput(char c)
 {
 	// toggle precision mode, if activated, move is 5 cm and 5 degrees
+	// use this mode when we are getting close to the goal
 	if(c == 't')
 	{
 		if(precision == 0){
@@ -267,7 +282,7 @@ int errorDetection()
 	else
 		sensorArray[RIGHT_BUMPER] = 0;
 	
-	/// cliff errors ///
+	/// section for cliff errors ///
 	
 	// left cliff
 	if(sensor_data->cliff_left == 1)
@@ -318,7 +333,7 @@ int errorDetection()
 		sensorArray[CLIFF_RIGHT] = 0;
 	
 	/// light errors, soon to be made ///
-	/*
+	
 	// left sensor to detect white tape
 	if(sensor_data->cliff_left_signal > WHITE_MIN)
 	{
@@ -406,7 +421,6 @@ int errorDetection()
 	}
 	else
 		sensorArray[CLIFF_RIGHT_SIGNAL] = 0;
-	*/	
 	// if there's an error, print the status of the sensors
 	if(detection == 1)
 		printSensorStatus(sensorArray);
@@ -418,6 +432,7 @@ int errorDetection()
 *
 * Function to loop through the sensor array and decide what to print
 * Prints the total number of sensors activated as well as which specific sensors are activated
+* @param takes in an array, in our situation we always use our sensor status array.
 */
 void printSensorStatus(int arr[])
 {
@@ -502,7 +517,7 @@ void printSensorStatus(int arr[])
 
 /**
  *
- * Same function as moveForward but updates and check if there's an error
+ * move the iRobot forward while updating and checking if there's an error
  *
  * @param sensor the desired sensor to read and update
  * @param centimeters the longest distance the iRobot will move
