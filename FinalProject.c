@@ -2,20 +2,8 @@
  * FinalProject.c
  *
  * Created: 4/12/2015 1:31:01 PM
- *  Author: sethl (Team?)
+ *  Author: Seth, David, Caleb, Anthony (Team?)
  */ 
-
-// Update 4/23/15 Anthony Khounlo
-/* Added some final touches to the program such as cleaner messages,
-   created a start and finish functions, implemented sounds, and
-   made keyboard commands work only with upper case to prevent
-   multiple presses since the serial_getc queues multiple presses.
-   TODO
-   - Make sure the light signals or whatever they're called have
-     correct values
-   - Make the rotation actually work and have accurate turns
-   - Test out the scan to make sure we get correct width measurements
-   */
 
 #include <avr/io.h>
 #include <stdio.h>
@@ -74,7 +62,7 @@ int isFinished = 0;
 
 /**
  *
- * blah blah blah
+ * The main() function to control the iRobot through the course
  *
  */
 int main(void)
@@ -85,9 +73,6 @@ int main(void)
 	// clear screen on putty
 	clearScreen();
 
-	// print the headers
-	//printHeader();
-	
 	// idle mode until we start
 	start();
 
@@ -136,7 +121,8 @@ void start()
 	
 	// play introduction song (Lost Woods)
 	oi_play_song(3);
-	
+	serial_puts("START!\n\r");
+	serial_puts("------------------------------------------------------\n\r");
 }
 
 /**
@@ -145,14 +131,19 @@ void start()
  */
 void finish()
 {
-	// TODO 
 	// blink led power light 3 times
-
-	// play victory song (Final Fantasy
+	for(int i = 0; i < 3; i++){
+		oi_set_leds(1, 0, 128, 255);
+		wait_ms(500);
+		oi_set_leds(0, 1, 128, 255);
+		wait_ms(500);
+	}
+	
+	// play victory song (Final Fantasy)
 	oi_play_song(2);
 	
 	// print to putty victory message
-	serial_puts("SWEET, SWEET, SWEET VICTORY");
+	serial_puts("\n\rSWEET, SWEET, SWEET VICTORY\n\r");
 	
 }
 
@@ -164,12 +155,12 @@ void finish()
 void courseMode()
 {
 	// stay in this loop until course is finished
-	while(isFinished != 0)
+	while(isFinished == 0)
 	{
 		// move the iRobot with the putty/keyboard, wasd controls
 		keyboardInput(serial_getc());
 		// separate each command
-		serial_puts("------------------------------------------------------");
+		serial_puts("------------------------------------------------------\n\r");
 	}
 	
 }
@@ -231,7 +222,7 @@ void keyboardInput(char c)
 		}
 	}
 	
-	// move the iRobot forward, 10 cm
+	// move the iRobot forward, 5 or 10 cm
 	else if(c == 'W')
 	{
 		if(precision)
@@ -247,7 +238,7 @@ void keyboardInput(char c)
 		wait_ms(100);
 	}
 	
-	// move the iRobot backwards, 10 cm
+	// move the iRobot backwards, 5 or 10 cm
 	else if(c == 'S')
 	{
 		if(precision)
@@ -266,39 +257,23 @@ void keyboardInput(char c)
 	// rotate the iRobot counter clockwise, 15 degrees
 	else if(c == 'A')
 	{
-		if(precision)
-		{
-			serial_puts("TURNING COUNTER CLOCKWISE 5 DEGREES\n\r\n\r");
-			turn_counter_clockwise(sensor_data, 5); // TODO
-		}
-		else
-		{
-			serial_puts("TURNING COUNTER CLOCKWISE 15 DEGREES\n\r\n\r");
-			turn_counter_clockwise(sensor_data, 15); // TODO
-		}
+		serial_puts("TURNING COUNTER CLOCKWISE 15 DEGREES\n\r\n\r");
+		turn_counter_clockwise(sensor_data, 15);
 		wait_ms(100);
 	}
 
 	// rotate the iRobot clockwise, 15 degrees
 	else if(c == 'D')
 	{
-		if(precision)
-		{
-			serial_puts("TURNING CLOCKWISE 5 DEGREEES\n\r\n\r");
-			turn_clockwise(sensor_data, 5); // TODO
-		}
-		else
-		{
-			serial_puts("TURNING CLOCKWISE 15 DEGREEES\n\r\n\r");
-			turn_clockwise(sensor_data, 15); // TODO
-		}
+		serial_puts("TURNING CLOCKWISE 15 DEGREEES\n\r\n\r");
+		turn_clockwise(sensor_data, 15);
 		wait_ms(100);
 	}
 
 	// start sweeping for ir and sonar data
 	else if(c == ' ')
 	{
-		oi_play_song(0);
+		//oi_play_song(0);
 		serial_puts("SWEEPING FOR OBJECTS\n\r");
 		smallestObjectSweep();
 		wait_ms(100);
@@ -314,15 +289,15 @@ void keyboardInput(char c)
 	// finish command
 	else if(c == 'f')
 	{
-		if(serial_getc == 'i')
+		if(serial_getc() == 'i')
 		{
-			if(serial_getc == 'n')
+			if(serial_getc() == 'n')
 			{
-				if(serial_getc == 'i')
+				if(serial_getc() == 'i')
 				{
-					if(serial_getc == 's')
+					if(serial_getc() == 's')
 					{
-						if(serial_getc == 'h')
+						if(serial_getc() == 'h')
 						{
 							isFinished = 1;
 						}
@@ -352,96 +327,95 @@ int errorDetection(int isRotating)
 	// if there's an error, set to 1
 	int detection = 0;
 	
+	// reset all sensors
+	for(int i = 0; i < 10; i++)
+		sensorArray[i] = 0;
+	
 	/// light errors///
-	/*
+	
+	// left sensor to detect black tape
+	if(sensor_data->cliff_left_signal < BLACK_MAX && sensor_data->cliff_left_signal > 20)
+	{
+		// stop the iRobot
+		//oi_set_wheels(0, 0);
+		// set detection to 1
+		detection = 3;
+		sensorArray[CLIFF_LEFT_SIGNAL] = 2;
+		
+	}
+	
+	// front left sensor to detect black tape
+	if(sensor_data->cliff_frontleft_signal < BLACK_MAX && sensor_data->cliff_frontleft_signal > 20)
+	{
+		// stop the iRobot
+		//oi_set_wheels(0, 0);
+		// set detection to 1
+		detection = 3;
+		sensorArray[CLIFF_FRONT_LEFT_SIGNAL] = 2;
+		
+	}
+	
+	// front right sensor to detect black tape
+	if(sensor_data->cliff_frontright_signal < BLACK_MAX && sensor_data->cliff_frontright_signal > 20)
+	{
+		// stop the iRobot
+		//oi_set_wheels(0, 0);
+		// set detection to 1
+		detection = 3;
+		sensorArray[CLIFF_FRONT_RIGHT_SIGNAL] = 2;
+		
+	}
+	
+	// right sensor to detect black tape
+	else if(sensor_data->cliff_right_signal < BLACK_MAX && sensor_data->cliff_right_signal > 20)
+	{
+		// stop the iRobot
+		//oi_set_wheels(0, 0);
+		// set detection to 1
+		detection = 3;
+		sensorArray[CLIFF_RIGHT_SIGNAL] = 2;
+		
+	}
+	
 	// left sensor to detect white tape
 	if(sensor_data->cliff_left_signal > WHITE_MIN)
 	{
 		// stop the iRobot
-		oi_set_wheels(0, 0);
+		//oi_set_wheels(0, 0);
 		// set detection to 1
 		detection = 2;
 		sensorArray[CLIFF_LEFT_SIGNAL] = 1;
 	}
-	// left sensor to detect black tape
-	else if(sensor_data->cliff_left_signal < BLACK_MAX)
-	{
-		// stop the iRobot
-		oi_set_wheels(0, 0);
-		// set detection to 1
-		detection = 2;
-		sensorArray[CLIFF_LEFT_SIGNAL] = 2;
-		
-	}
-	else
-		sensorArray[CLIFF_LEFT_SIGNAL] = 0;
 	
 	// front left sensor to detect white tape
-	if(sensor_data->cliff_frontleft_signal > WHITE_MIN)
+	if(sensor_data->cliff_frontleft_signal > WHITE_MIN+200)
 	{
 		// stop the iRobot
-		oi_set_wheels(0, 0);
+		//oi_set_wheels(0, 0);
 		// set detection to 1
 		detection = 2;
 		sensorArray[CLIFF_FRONT_LEFT_SIGNAL] = 1;
 	}
-	// front left sensor to detect black tape
-	else if(sensor_data->cliff_frontleft_signal < BLACK_MAX)
-	{
-		// stop the iRobot
-		oi_set_wheels(0, 0);
-		// set detection to 1
-		detection = 2;
-		sensorArray[CLIFF_FRONT_LEFT_SIGNAL] = 2;
-		
-	}
-	else
-		sensorArray[CLIFF_FRONT_LEFT_SIGNAL] = 0;
 	
 	// front right sensor to detect white tape
 	if(sensor_data->cliff_frontright_signal > WHITE_MIN)
 	{
 		// stop the iRobot
-		oi_set_wheels(0, 0);
+		//oi_set_wheels(0, 0);
 		// set detection to 1
 		detection = 2;
 		sensorArray[CLIFF_FRONT_RIGHT_SIGNAL] = 1;
 	}
-	// front right sensor to detect black tape
-	else if(sensor_data->cliff_frontright_signal < BLACK_MAX)
-	{
-		// stop the iRobot
-		oi_set_wheels(0, 0);
-		// set detection to 1
-		detection = 2;
-		sensorArray[CLIFF_FRONT_RIGHT_SIGNAL] = 2;
-		
-	}
-	else
-		sensorArray[CLIFF_FRONT_RIGHT_SIGNAL] = 0;
 	
 	// right sensor to detect white tape
 	if(sensor_data->cliff_right_signal > WHITE_MIN)
 	{
 		// stop the iRobot
-		oi_set_wheels(0, 0);
+		//oi_set_wheels(0, 0);
 		// set detection to 1
 		detection = 2;
 		sensorArray[CLIFF_RIGHT_SIGNAL] = 1;
 	}
-	// right sensor to detect black tape
-	else if(sensor_data->cliff_right_signal < BLACK_MAX)
-	{
-		// stop the iRobot
-		oi_set_wheels(0, 0);
-		// set detection to 1
-		detection = 2;
-		sensorArray[CLIFF_RIGHT_SIGNAL] = 2;
-		
-	}
-	else
-		sensorArray[CLIFF_RIGHT_SIGNAL] = 0;
-	*/
 	
 	/// bumper errors ///
 	
@@ -453,9 +427,8 @@ int errorDetection(int isRotating)
 		// set detection to 1
 		detection = 1;
 		sensorArray[LEFT_BUMPER] = 1;
+		oi_play_song(0);
 	}
-	else
-		sensorArray[LEFT_BUMPER] = 0;
 	
 	// right bumper
 	if(sensor_data->bumper_right == 1)
@@ -465,9 +438,8 @@ int errorDetection(int isRotating)
 		// set detection to 1
 		detection = 1;
 		sensorArray[RIGHT_BUMPER] = 1;
+		oi_play_song(0);
 	}
-	else
-		sensorArray[RIGHT_BUMPER] = 0;
 	
 	/// cliff errors ///
 	
@@ -480,8 +452,6 @@ int errorDetection(int isRotating)
 		detection = 1;
 		sensorArray[CLIFF_LEFT] = 1;
 	}
-	else
-		sensorArray[CLIFF_LEFT] = 0;
 	
 	// front left cliff
 	if(sensor_data->cliff_frontleft == 1)
@@ -492,8 +462,6 @@ int errorDetection(int isRotating)
 		detection = 1;
 		sensorArray[CLIFF_FRONT_LEFT] = 1;
 	}
-	else
-		sensorArray[CLIFF_FRONT_LEFT] = 0;
 	
 	// front right cliff
 	if(sensor_data->cliff_frontright == 1)
@@ -504,8 +472,6 @@ int errorDetection(int isRotating)
 		detection = 1;
 		sensorArray[CLIFF_FRONT_RIGHT] = 1;
 	}
-	else
-		sensorArray[CLIFF_FRONT_RIGHT] = 0;
 	
 	// right cliff
 	if(sensor_data->cliff_right == 1)
@@ -516,12 +482,10 @@ int errorDetection(int isRotating)
 		detection = 1;
 		sensorArray[CLIFF_RIGHT] = 1;
 	}
-	else
-		sensorArray[CLIFF_RIGHT] = 0;
 	
 		
 	// if there's an error, print the status of the sensors
-	if(detection != 0 && isRotating == 0);
+	if((detection != 0) && (detection != 3) && (isRotating == 0))
 		printSensorStatus(sensorArray);
 	
 	return detection;
@@ -586,7 +550,7 @@ void printSensorStatus(int arr[])
 			serial_puts("  LEFT FRONT OVER WHITE TAPE\n\r");
 		}
 		else {
-			serial_puts("LEFT FRONT OVER BLACK TAPE\n\r");
+			serial_puts("  LEFT FRONT OVER BLACK TAPE\n\r");
 		}
 	}
 	if(sensorArray[CLIFF_FRONT_RIGHT_SIGNAL] != 0)
@@ -622,7 +586,7 @@ void printSensorStatus(int arr[])
  */
 void moveFowardUpdate(oi_t* sensor, int centimeters){
 	// if the current state of the iRobot has an error, return
-	if(errorDetection(0) != 0){
+	if(errorDetection(0) != 0 && errorDetection(0) != 3){
 		serial_puts("CAN'T MOVE!\n\r\n\r");
 		return;
 	}
@@ -631,15 +595,13 @@ void moveFowardUpdate(oi_t* sensor, int centimeters){
 	int sum = 0;
 	oi_set_wheels(150, 150); // move forward;
 	
-	while (sum < millimeters) {
+	while (sum < millimeters)
+	{
 		// check if there's an error detectiion while moving
 		// if so, break out the loop and stop
-		if(errorDetection(0) != 0)
+		if(errorDetection(0) != 0 && errorDetection(0) != 3)
 		{
-			char error[30];
-			sprintf(error, "\n\rSTOPPED DUE TO SENSORS!\n\rMOVED ONLY %02d CM\n\r",
-				sum/10);
-			serial_puts(error);
+			serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
 			oi_set_wheels(0, 0);
 			break;
 		}
@@ -647,56 +609,10 @@ void moveFowardUpdate(oi_t* sensor, int centimeters){
 	}
 	
 	oi_set_wheels(0, 0); // stop
-	oi_free(sensor);
+	// print the sensor status if there's just black tape
+	if(errorDetection(0) == 3)
+		printSensorStatus(sensorArray);
 }
-
-/**
- *
- * Same function as turnClockwise but updates and check if there's an error
- *
- * @param sensor the desired sensor to read and update
- * @param centimeters the longest distance the iRobot will move
- */
-// void turnClockwiseUpdate(oi_t* sensor, int degrees) {
-// 	// if the current state of the iRobot has an error, return
-// 	if(errorDetection() == 1){
-// 		serial_puts("CAN'T MOVE!\n\r\n\r");
-// 		return;
-// 	}
-// 	
-// 	int sum = 12;
-// 	if (degrees > 0) {
-// 		oi_set_wheels(-150,150); // turn degrees;
-// 		
-// 		while (sum < degrees) {
-// 			if(errorDetection() == 1)
-// 			{
-// 				serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
-// 				oi_set_wheels(0, 0);
-// 				break;
-// 			}
-// 			sum -= sensor->angle;
-// 		}
-// 		
-// 		oi_set_wheels(0, 0); // stop
-// 		oi_free(sensor);
-// 	}
-// 	else {
-// 		oi_set_wheels(150,-150); // turn degrees;
-// 		while (sum > degrees) {
-// 			if(errorDetection() == 1)
-// 			{
-// 				serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
-// 				oi_set_wheels(0, 0);
-// 				break;
-// 			}
-// 			sum -= sensor->angle;
-// 		}
-// 		
-// 		oi_set_wheels(0, 0); // stop
-// 		oi_free(sensor);
-// 	}
-// 	
 
 /**
  *
@@ -713,19 +629,18 @@ void turn_clockwise(oi_t *sensor, int degrees){
 	}
 	
 	int sum = 0;
-	oi_set_wheels(-225, 225); // move forward; 150/500 speed
-	while (sum < degrees) {
+	oi_set_wheels(-150, 150); // move forward; 150/500 speed
+	while (sum+7 < degrees) 
+	{
 		if(errorDetection(1) == 1)
 		{
-			char error[30];
-			sprintf(error, "\n\rSTOPPED DUE TO SENSORS!\n\rROTATED CW ONLY %02d CM\n\r",
-				sum);
-			serial_puts(error);
+			serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
 			oi_set_wheels(0, 0);
+			
 			break;
 		}
 		wait_ms(10);
-		sum += sensor->angle;
+		sum -= sensor->angle;
 		
 	}
 	
@@ -748,15 +663,14 @@ void turn_counter_clockwise(oi_t *sensor, int degrees){
 	}
 	
 	int sum = 0;
-	oi_set_wheels(225, -225); // move forward; 150/500 speed
-	while (sum < degrees) {
+	oi_set_wheels(150, -150); // move forward; 150/500 speed
+	while (sum+7 < degrees) 
+	{
 		if(errorDetection(1) == 1)
 		{
-			char error[30];
-			sprintf(error, "\n\rSTOPPED DUE TO SENSORS!\n\rROTATED CCW ONLY %02d CM\n\r",
-				sum);
-			serial_puts(error);
+			serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
 			oi_set_wheels(0, 0);
+			
 			break;
 		}
 		wait_ms(10);
