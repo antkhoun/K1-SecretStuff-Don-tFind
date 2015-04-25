@@ -5,7 +5,17 @@
  *  Author: sethl (Team?)
  */ 
 
-//
+// Update 4/23/15 Anthony Khounlo
+/* Added some final touches to the program such as cleaner messages,
+   created a start and finish functions, implemented sounds, and
+   made keyboard commands work only with upper case to prevent
+   multiple presses since the serial_getc queues multiple presses.
+   TODO
+   - Make sure the light signals or whatever they're called have
+     correct values
+   - Make the rotation actually work and have accurate turns
+   - Test out the scan to make sure we get correct width measurements
+   */
 
 #include <avr/io.h>
 #include <stdio.h>
@@ -37,6 +47,9 @@
 #define CLIFF_RIGHT_SIGNAL 9
 
 void initialize(); // initialize the timers, etc.
+void start(); // keep the iRobot in idle mode until ready to start
+void finish(); // set the iRobot into victory mode!
+void courseMode(); // put the iRobot in course/manual mode
 void clearScreen(); // pseudo clear screen for putty
 void printHeader(); // print the header
 void printData(); // print the data under the header
@@ -45,9 +58,8 @@ int errorDetection(int isRotating); // detects if there's an obstacle the iRobot
 void printSensorStatus(int arr[]); // print out the sensors that are activated
 void moveFowardUpdate(oi_t* sensor, int centimeters); //moves the iRobot forward
 void turnClockwiseUpdate(oi_t* sensor, int degrees); // rotates the iRobot
-void function_4_14(); // what we had in the while loop on 4/14/16 as a function
-void turn_clockwise(oi_t *sensor, int degrees);
-void turn_counter_clockwise(oi_t *sensor, int degrees);
+void turn_clockwise(oi_t *sensor, int degrees); // turn iRobot clockwise
+void turn_counter_clockwise(oi_t *sensor, int degrees); //turn iRobot counter clockwise
 
 // a string for printing sensor data
 char dataString[250];
@@ -57,6 +69,8 @@ oi_t *sensor_data;
 int sensorArray[10];
 // to indicate whether the iRobot is in precision mode
 int precision = 0;
+// variable to indicate when the course is finished
+int isFinished = 0;
 
 /**
  *
@@ -73,17 +87,16 @@ int main(void)
 
 	// print the headers
 	//printHeader();
+	
+	// idle mode until we start
+	start();
 
-	while(1){
-		
-		// move the iRobot with the putty/keyboard, wasd controls
-		keyboardInput(serial_getc());
-		
-// 		oi_update(sensor_data);
-// 		printData();
-// 		wait_ms(100);
-
-	}
+	// mode that will allow us to control the iRobot 
+	courseMode();
+	
+	// victory!
+	finish();
+	
 }
 
 /**
@@ -105,9 +118,62 @@ void initialize()
 	// initialize LCD
 	lcd_init();
 	load_songs();
-	//oi_play_song(3);
+	
 }
 
+/**
+ *
+ * Function to let the robot be in idle until we start
+ */
+void start()
+{
+	// stay in while loop until ready when 1 is entered
+	while(1)
+	{
+		if(serial_getc() == '1')
+			break;
+	}
+	
+	// play introduction song (Lost Woods)
+	oi_play_song(3);
+	
+}
+
+/**
+ *
+ * Function to stop the robot when finished with the course
+ */
+void finish()
+{
+	// TODO 
+	// blink led power light 3 times
+
+	// play victory song (Final Fantasy
+	oi_play_song(2);
+	
+	// print to putty victory message
+	serial_puts("SWEET, SWEET, SWEET VICTORY");
+	
+}
+
+/**
+ *
+ * Function to put the iRobot into manual control in putty
+ * will be used to control the iRobot through the course
+ */
+void courseMode()
+{
+	// stay in this loop until course is finished
+	while(isFinished != 0)
+	{
+		// move the iRobot with the putty/keyboard, wasd controls
+		keyboardInput(serial_getc());
+		// separate each command
+		serial_puts("------------------------------------------------------");
+	}
+	
+}
+	
 /**
  *
  * Function to clear the screen on putty
@@ -153,7 +219,7 @@ void printData()
 void keyboardInput(char c)
 {
 	// toggle precision mode, if activated, move is 5 cm and 5 degrees
-	if(c == 't')
+	if(c == 'T')
 	{
 		if(precision == 0){
 			serial_puts("PRECISION ACTIVATED\n\r\n\r");
@@ -166,61 +232,104 @@ void keyboardInput(char c)
 	}
 	
 	// move the iRobot forward, 10 cm
-	else if(c == 'w')
+	else if(c == 'W')
 	{
-		serial_puts("MOVING FORWARD\n\r\n\r");
 		if(precision)
+		{
+			serial_puts("MOVING FORWARD 5 CM\n\r\n\r");
 			moveFowardUpdate(sensor_data, 5);
+		}
 		else
+		{
+			serial_puts("MOVING FORWARD 10 CM\n\r\n\r");
 			moveFowardUpdate(sensor_data, 10);
+		}
 		wait_ms(100);
 	}
 	
 	// move the iRobot backwards, 10 cm
-	else if(c == 's')
+	else if(c == 'S')
 	{
-		serial_puts("MOVING BACKWARD\n\r\n\r");
 		if(precision)
+		{
+			serial_puts("MOVING BACKWARD 5 CM\n\r\n\r");
 			moveBackward(sensor_data, 5);
+		}
 		else
+		{
+			serial_puts("MOVING BACKWARD 10 CM\n\r\n\r");
 			moveBackward(sensor_data, 10);
+		}
 		wait_ms(100);
 	}
 
 	// rotate the iRobot counter clockwise, 15 degrees
-	else if(c == 'a')
+	else if(c == 'A')
 	{
-		serial_puts("TURNING COUNTER CLOCKWISE\n\r\n\r");
 		if(precision)
+		{
+			serial_puts("TURNING COUNTER CLOCKWISE 5 DEGREES\n\r\n\r");
 			turn_counter_clockwise(sensor_data, 5); // TODO
+		}
 		else
+		{
+			serial_puts("TURNING COUNTER CLOCKWISE 15 DEGREES\n\r\n\r");
 			turn_counter_clockwise(sensor_data, 15); // TODO
+		}
 		wait_ms(100);
 	}
 
 	// rotate the iRobot clockwise, 15 degrees
-	else if(c == 'd')
+	else if(c == 'D')
 	{
-		serial_puts("TURNING CLOCKWISE\n\r\n\r");
 		if(precision)
+		{
+			serial_puts("TURNING CLOCKWISE 5 DEGREEES\n\r\n\r");
 			turn_clockwise(sensor_data, 5); // TODO
+		}
 		else
+		{
+			serial_puts("TURNING CLOCKWISE 15 DEGREEES\n\r\n\r");
 			turn_clockwise(sensor_data, 15); // TODO
+		}
 		wait_ms(100);
 	}
 
 	// start sweeping for ir and sonar data
 	else if(c == ' ')
 	{
+		oi_play_song(0);
 		serial_puts("SWEEPING FOR OBJECTS\n\r");
 		smallestObjectSweep();
 		wait_ms(100);
 	}
 	
 	// clear screen
-	else if(c == '-'){
+	else if(c == '-')
+	{
 		clearScreen();
 		wait_ms(100);
+	}
+	
+	// finish command
+	else if(c == 'f')
+	{
+		if(serial_getc == 'i')
+		{
+			if(serial_getc == 'n')
+			{
+				if(serial_getc == 'i')
+				{
+					if(serial_getc == 's')
+					{
+						if(serial_getc == 'h')
+						{
+							isFinished = 1;
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	// if any other key is pressed, nothing happens
@@ -232,7 +341,7 @@ void keyboardInput(char c)
  * Function that detects the error and updates the state of the iRobot
  * 
  * @param isRotating 0 if it's not rotating, 1 if it is
- * @return returns 1 if there's an error detected, else 0
+ * @return returns 1 if there's an error detected, 2 if it's only a light sensor, else 0
  */
 int errorDetection(int isRotating)
 {
@@ -243,7 +352,7 @@ int errorDetection(int isRotating)
 	// if there's an error, set to 1
 	int detection = 0;
 	
-	/// light errors, soon to be made ///
+	/// light errors///
 	/*
 	// left sensor to detect white tape
 	if(sensor_data->cliff_left_signal > WHITE_MIN)
@@ -527,7 +636,10 @@ void moveFowardUpdate(oi_t* sensor, int centimeters){
 		// if so, break out the loop and stop
 		if(errorDetection(0) != 0)
 		{
-			serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
+			char error[30];
+			sprintf(error, "\n\rSTOPPED DUE TO SENSORS!\n\rMOVED ONLY %02d CM\n\r",
+				sum/10);
+			serial_puts(error);
 			oi_set_wheels(0, 0);
 			break;
 		}
@@ -586,6 +698,13 @@ void moveFowardUpdate(oi_t* sensor, int centimeters){
 // 	}
 // 	
 
+/**
+ *
+ * Same function as turnClockwise but updates and check if there's an error
+ *
+ * @param sensor the desired sensor to read and update
+ * @param degrees the amount of rotation clockwise
+ */
 void turn_clockwise(oi_t *sensor, int degrees){
 	// if the current state of the iRobot has an error, return
 	if(errorDetection(1) == 1){
@@ -598,7 +717,10 @@ void turn_clockwise(oi_t *sensor, int degrees){
 	while (sum < degrees) {
 		if(errorDetection(1) == 1)
 		{
-			serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
+			char error[30];
+			sprintf(error, "\n\rSTOPPED DUE TO SENSORS!\n\rROTATED CW ONLY %02d CM\n\r",
+				sum);
+			serial_puts(error);
 			oi_set_wheels(0, 0);
 			break;
 		}
@@ -611,6 +733,13 @@ void turn_clockwise(oi_t *sensor, int degrees){
 	errorDetection(0);
 }
 
+/**
+ *
+ * Same function as turn_clockwise but moves counter clockwise
+ *
+ * @param sensor the desired sensor to read and update
+ * @param degrees the amount of rotation clockwise
+ */
 void turn_counter_clockwise(oi_t *sensor, int degrees){
 	// if the current state of the iRobot has an error, return
 	if(errorDetection(1) == 1){
@@ -623,7 +752,10 @@ void turn_counter_clockwise(oi_t *sensor, int degrees){
 	while (sum < degrees) {
 		if(errorDetection(1) == 1)
 		{
-			serial_puts("\n\rSTOPPED DUE TO SENSORS!\n\r");
+			char error[30];
+			sprintf(error, "\n\rSTOPPED DUE TO SENSORS!\n\rROTATED CCW ONLY %02d CM\n\r",
+				sum);
+			serial_puts(error);
 			oi_set_wheels(0, 0);
 			break;
 		}
@@ -633,46 +765,4 @@ void turn_counter_clockwise(oi_t *sensor, int degrees){
 	}
 	oi_set_wheels(0, 0); // stop
 	errorDetection(0);
-}
-
-/**
- *
- * Function that recreates what we have done in lab on 4/14/16
- *
- */
-void function_4_14()
-{
-	// update sensor values
-	oi_update(sensor_data);
-	// check if robot is on cliff edge
-	if(sensor_data->cliff_frontleft == 1 || sensor_data->cliff_frontright == 1 || sensor_data->cliff_right == 1 || sensor_data->cliff_left == 1){
-		//Print to Console that Cliff has been detected
-		serial_puts("DANGER! CLIFF! Rerouting...                                                                                               \r");
-		// Stop and Wait
-		oi_set_wheels(0,0);
-		wait_ms(50);
-		// Move backwards 15 cm and wait
-		moveBackward(sensor_data,15);
-		wait_ms(100);
-		oi_set_wheels(0,0);
-		// begin scan to determine where to turn once we've seen the cliff
-		int degreesToTurn = smallestObjectSweep();
-		lprintf("Sweep Result: %d",degreesToTurn);
-		if(degreesToTurn < 90) {
-			turnClockwise(sensor_data, 90-degreesToTurn);
-		}
-		else {
-			turnClockwise(sensor_data,-1*(degreesToTurn - 90));
-		}
-		
-	}
-	// if not near a cliff, just keep going, and print all sensor data
-	else{
-		oi_set_wheels(100,100);
-		// build string with given sensor data
-		printData();
-		// print the built string
-		serial_puts(dataString);
-		wait_ms(100);
-	}
 }
